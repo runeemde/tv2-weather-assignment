@@ -1,14 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Axios from 'axios'
+import Url from 'domurl'
 
 class App extends React.Component{
     constructor(props) {
         super(props);
-        let searchFromUrl = this.getUrlParam('city')
+        var url = new Url;
         this.state = {
-            search : searchFromUrl ? searchFromUrl : 'Copenhagen',
-            showError : false,
+            search : url.query.city ? url.query.city : 'Copenhagen',
+            hasError : false,
             weather : {
                 city: '',
                 temperature : '',
@@ -22,24 +23,16 @@ class App extends React.Component{
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
     }
-    getUrlParam(name){
-        var url = location.href;
-        name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-        var regexS = "[\\?&]"+name+"=([^&#]*)";
-        var regex = new RegExp( regexS );
-        var results = regex.exec( url );
-        return results == null ? null : results[1];
-    }
-    getDirection(degree) {
-        var directions = ['North', 'North-West', 'West', 'South-West', 'South', 'South-East', 'East', 'North-East'];
-        return directions[Math.round(((degree %= 360) < 0 ? degree + 360 : degree) / 45) % 8];
-    }
     handleSubmit(event) {
         this.searchWeather(this.state.search);
         event.preventDefault();
     }
     handleChange(event) {        
         this.setState({ search: event.target.value, showError:false});
+    }
+    getDirection(degree) {
+        var directions = ['North', 'North-West', 'West', 'South-West', 'South', 'South-East', 'East', 'North-East'];
+        return directions[Math.round(((degree %= 360) < 0 ? degree + 360 : degree) / 45) % 8];
     }
     searchWeather(city){   
         Axios.get('https://api.openweathermap.org/data/2.5/weather?q='+city+'&appid=166d00e26d3ff2c6149e89feccc5c59a&units=metric')
@@ -59,15 +52,16 @@ class App extends React.Component{
             });
         }).catch(error=>{
             this.setState({
-                showError: true
+                hasError: true
             })
         });
+        var url = new Url();
+        url.query.city = city;
+        history.replaceState({},"",url.toString())
     }
-
     componentDidMount() {
         this.searchWeather(this.state.search)
     }
-
     render(){
       return(
         <div className="panel panel-info">
@@ -75,7 +69,7 @@ class App extends React.Component{
             <ul className="list-group">
                 <li className="list-group-item">Temperature: <b>{Math.round(this.state.weather.temperature)}°C</b></li>
                 <li className="list-group-item">Humidity: <b>{this.state.weather.humidity}</b></li>
-                <li className="list-group-item">Wind: <b>{this.state.weather.wind.speed} m/s {this.getDirection(this.state.weather.wind.deg)}</b></li>
+                <li className="list-group-item">Wind: <b>{this.state.weather.wind.speed} m/s {this.state.weather.wind.deg ? this.getDirection(this.state.weather.wind.deg) : 'N/A'}</b></li>
                 <li className="list-group-item">
                     <form className="form-inline" onSubmit={this.handleSubmit}>
                         <div className="form-group">
@@ -85,7 +79,7 @@ class App extends React.Component{
                     </form>
                 </li>
             </ul>
-            { this.state.showError && (
+            { this.state.hasError && (
                 <div className="alert alert-danger" role="alert">
                     Could not find weather for city '{this.state.search}'
                 </div>
