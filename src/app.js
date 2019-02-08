@@ -6,6 +6,7 @@ import Url from 'domurl'
 class App extends React.Component{
     constructor(props) {
         super(props);
+
         var url = new Url;
         this.state = {
             search : url.query.city ? url.query.city : 'Copenhagen',
@@ -48,7 +49,8 @@ class App extends React.Component{
             }
             this.setState({
                 search:'',
-                weather:weather
+                weather:weather,
+                hasError: false                
             });
         }).catch(error=>{
             this.setState({
@@ -81,7 +83,7 @@ class App extends React.Component{
             </ul>
             { this.state.hasError && (
                 <div className="alert alert-danger" role="alert">
-                    Could not find weather for city '{this.state.search}'
+                    Could not find weather for city
                 </div>
                 )
             }
